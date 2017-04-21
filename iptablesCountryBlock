@@ -1,0 +1,97 @@
+#!/bin/bash
+#!/bin/sh
+# Blocking all traffic from AFGHANISTAN (af) and CHINA (CN) india(IN) virtnam(VN) Syrian Arab (SY) Pakistan (PK) Serbia (RS) Arab Emirates (AE) Ethiopia (ET). Use ISO code.
+# Author: Rafal Dwojak -> support@EagleHosting.ca
+# 2016
+PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/sbin"
+COUNTRYISO="af cn in vn sy rs pk ae et ir bo sa id bj tn th ci co ve br mx lv hk kh"
+
+IPT=/sbin/iptables
+WGET=/usr/bin/wget
+EGREP=/bin/egrep
+
+IPTBACKUP="/opt/iptablesCountryBlock/backup"
+ZONELOCALPATH="/opt/iptablesCountryBlock/zones"
+LISTURI="http://www.ipdeny.com/ipblocks/data/countries"
+
+#Setup time stamp
+STAMP=`date +%m%d%Y-%H%M%S`
+echo `date +'%m/%d/%Y %H:%M:%S'`
+
+# save a backup copy for iptables
+echo "Saving a backup copy for iptables to "
+cp /etc/sysconfig/iptables $IPTBACKUP/iptables.$STAMP
+
+cleanUpOldRules(){
+# Clean out the existing open-ended rules if it exists
+
+# create a new iptables chain
+#iptables -N $1
+
+#Flush chain
+echo "Cleaning out existing firewall rules from $1 chain."
+iptables -F $1
+
+iptables -N $1
+# Redirect traffic ti chain
+$IPT -I INPUT -j $1
+#$IPT -I OUTPUT -j $1
+#$IPT -I FORWARD -j $1
+}
+
+# create a dir
+[ ! -d $ZONELOCALPATH ] && /bin/mkdir -p $ZONELOCALPATH
+[ ! -d $IPTBACKUP ] && /bin/mkdir -p $IPTBACKUP
+
+for c  in $COUNTRYISO
+do
+                # local zone file
+                tDB=$ZONELOCALPATH/$c.zone
+
+                # get fresh zone file
+                $WGET -O $tDB $LISTURI/$c.zone
+
+                if [ ! -s $ZONELOCALPATH/$c.zone ]
+        then
+                echo "Unable to add $c to IPTABLES because list is missing or empty."
+                #exit 1
+        #fi
+        else
+
+                # if country.zone.processed exists, compare changes
+                if [ -f $ZONELOCALPATH/$c.zone.processed ]
+                        then
+                        echo "Checking if any changes to the $c ip country list."
+                        diff $ZONELOCALPATH/$c.zone $ZONELOCALPATH/$c.zone.processed
+                        CHANGES=$?
+
+                        if [ $CHANGES -eq 0 ]
+                                then
+                                        echo "No ip changes since last iptables update for $c"
+                                        #exit 0
+                                else
+                    # clean up old rules
+                    cleanUpOldRules $c
+
+                                        echo "Processing ip list into iptables..."
+                                        # get ip`s from list
+                                        BADIPS=$(egrep -v "^#|^$" $tDB)
+                                        for ipblock in $BADIPS
+                                        do
+                                           $IPT -A $c -s $ipblock -j LOG --log-prefix "$c country code ip drop "
+                                           $IPT -A $c -s $ipblock -j DROP
+                                        done
+                                        $IPT -A $c -j RETURN
+                                        echo "Done. Mark ip list as processed."
+                                        #Move country list file to country.zone.processed
+                                        mv $ZONELOCALPATH/$c.zone $ZONELOCALPATH/$c.zone.processed
+                        fi
+                else
+                    #Only should happen on first time when used
+                    touch $ZONELOCALPATH/$c.zone.processed
+                fi
+       fi
+done
+#Enable line to save changes beetwen iptables restart
+#service iptables save
+exit 0
