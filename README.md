@@ -27,3 +27,7 @@ vi /etc/rsyslog.d/iptablesCountryBlock.conf
 :msg, contains, "country code ip drop" -/var/log/iptablesCountryBlock.log
 #& stop
 & ~
+or
+vi /etc/syslog.conf
+local4.*                                                /var/log/iptablesCountryBlock.log
+
