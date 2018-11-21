@@ -22,3 +22,7 @@ vi /etc/logrotate.d/iptablesCountryBlock
         rotate 7
         notifempty
 }
+
+vi /etc/rsyslog.d/iptablesCountryBlock.conf
+:msg, contains, "country code ip drop" -/var/log/iptablesCountryBlock.log
+& ~
