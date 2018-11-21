@@ -4,7 +4,7 @@
 # Author: Rafal Dwojak -> support@EagleHosting.ca
 # 2016
 PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/sbin"
-COUNTRYISO="af cn in vn sy rs pk ae et ir bo sa id bj tn th ci co ve br mx lv hk kh"
+COUNTRYISO="af cn in vn sy rs pk ae et ir bo sa id bj tn th ci co ve br mx lv"
 
 IPT=/sbin/iptables
 WGET=/usr/bin/wget
