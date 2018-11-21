@@ -78,7 +78,8 @@ do
                                         BADIPS=$(egrep -v "^#|^$" $tDB)
                                         for ipblock in $BADIPS
                                         do
-                                           $IPT -A $c -s $ipblock -j LOG --log-level 4 --log-prefix "$c country code ip drop "
+                                           $IPT -A $c -s $ipblock -j LOG --log-prefix "$c country code ip drop "
+                                           #$IPT -A $c -s $ipblock -j LOG --log-level 4
                                            $IPT -A $c -s $ipblock -j DROP
                                         done
                                         $IPT -A $c -j RETURN
